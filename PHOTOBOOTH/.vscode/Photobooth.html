@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Booth</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #ff6b6b;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .booth {
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .capture-area {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            overflow: hidden;
+            border-radius: 8px;
+            background-color: #e9ecef;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .preview-container {
+            width: 100%;
+            max-width: 200px;
+            min-height: 300px;
+            border-radius: 8px;
+            background-color: #e9ecef;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .preview-container p {
+            color: #6c757d;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        #preview-images {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .preview-image {
+            width: 230px;
+            height: 140px; 
+            max-width: 100%;
+            max-height: 150px;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            margin: 6px 0;
+
+        }
+
+        .preview-count {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin-top: auto;
+            margin-bottom: 5px;
+        }
+
+        .preview-nav {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 10px;
+            margin-top: 5px;
+        }
+
+        .preview-nav button {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .preview-nav button:hover {
+            background-color: #f8f9fa;
+        }
+
+        .preview-nav button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+            background-color: #e9ecef;
+        }
+
+        #countdown-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 5rem;
+            color: white;
+            background-color: rgba(0,0,0,0.5);
+            visibility: hidden;
+            z-index: 10;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            margin: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #capture-btn {
+            background-color: #4ecdc4;
+            color: white;
+        }
+
+        #capture-btn:hover {
+            background-color: #1a535c;
+        }
+
+        #review-btn {
+            background-color: #ff6b6b;
+            color: white;
+        }
+
+        #review-btn:hover {
+            background-color: #c62828;
+        }
+
+        #back-btn {
+            background-color: #ffe66d;
+            color: #1a535c;
+        }
+
+        #back-btn:hover {
+            background-color: #ffd100;
+        }
+
+        #download-btn {
+            background-color: #ff9f1c;
+            color: white;
+        }
+
+        #download-btn:hover {
+            background-color: #e76f51;
+        }
+
+        .selector-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        input[type="number"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 50px;
+            width: 150px;
+            font-size: 14px;
+            text-align: center;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .template-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .template-list li {
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            border: 3px solid #ddd;
+            background-color: white;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+            width: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .template-list li:hover {
+            border-color: #ff6b6b;
+        }
+
+        .template-list li.active {
+            border-color: #ff6b6b;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .template-list li img {
+            width: 100px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            border: 1px solid #eee;
+        }
+
+         .template-list li span {
+            text-align: center;
+            color: #333;
+         }
+
+         .template-list li.active span {
+            color: #ff6b6b;
+         }
+
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .strip {
+            width: 300px;
+            margin: 20px auto;
+            background-color: white;
+            padding: 20px 10px 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .strip img {
+            width: 230px;
+            height: 170px;
+            object-fit: cover;
+            display: block;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .strip h2 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .strip p {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .white-template {
+            background-color: white;
+        }
+
+        .template1 {
+            background-color: #f8e9e9;
+        }
+
+        .template2 {
+            background-color: #e9f8f2;
+        }
+
+        .template3 {
+            background-color: #e9eef8;
+        }
+
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .progress-circles {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #dee2e6;
+            transition: background-color 0.3s ease;
+        }
+
+        .circle.filled {
+            background-color: #4ecdc4;
+        }
+
+        @media (max-width: 768px) {
+            .capture-area {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .camera-container, .preview-container {
+                width: 100%;
+                max-width: none;
+            }
+
+            .preview-container {
+                 min-height: 200px;
+            }
+
+            .template-list {
+                flex-direction: row;
+                justify-content: center;
+            }
+
+             .template-list li {
+                width: 100px;
+             }
+
+             .template-list li img {
+                width: 80px;
+                height: 120px;
+             }
+
+            .strip {
+                width: 90%;
+                padding: 15px 8px 8px;
+            }
+
+            .strip img {
+                width: 90%;
+                height: auto;
+            }
+
+             h1 {
+                 font-size: 2rem;
+             }
+
+             button {
+                 padding: 10px 20px;
+                 font-size: 14px;
+             }
+
+             input[type="number"] {
+                 width: 100px;
+             }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Photo Booth</h1>
+
+        <div id="capture-page" class="page active">
+            <div class="booth">
+                <div class="capture-area">
+                    <div class="camera-container">
+                        <video autoplay id="video"></video>
+                        <div id="countdown-overlay"></div>
+                    </div>
+                    <div class="preview-container">
+                        <p>Preview</p>
+                        <div id="preview-images">
+                            <div style="width: 150px; height: 150px; background-color: #dee2e6; border-radius: 4px; display: flex; justify-content: center; align-items: center; color: #6c757d; font-size: 14px;">No photos yet</div>
+                        </div>
+                        <div class="progress-circles">
+                            <div class="circle" id="circle-1"></div>
+                            <div class="circle" id="circle-2"></div>
+                            <div class="circle" id="circle-3"></div>
+                        </div>
+                        <p class="preview-count">0/3 Photos</p>
+                        <div class="preview-nav">
+                            <button id="prev-preview" disabled>&lt;</button>
+                            <button id="next-preview" disabled>&gt;</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="controls">
+                <div class="selector-row">
+                    <label for="timer" style="font-weight: bold; color: #555;">Timer (seconds):</label>
+                    <input type="number" min="1" value="3" id="timer" aria-label="Timer in seconds" />
+                </div>
+                <button id="capture-btn">Capture Photos</button>
+                <button id="review-btn" disabled>Review & Download</button>
+            </div>
+        </div>
+
+        <div id="preview-page" class="page">
+            <div class="booth">
+                <div id="photos">
+                    </div>
+            </div>
+
+            <h3>Choose a Template</h3>
+            <ul id="template-list" class="template-list">
+                <li data-value="white-template" class="active">
+                    <img src="https://placehold.co/100x150/ffffff/000000?text=Default" alt="Default Template Preview">
+                    <span>Default Template</span>
+                </li>
+                <li data-value="template1">
+                     <img src="template1.jfif" alt="Template 1 Preview" onerror="this.src='https://placehold.co/100x150/f8e9e9/000000?text=Template+1+Error';">
+                     <span>Template 1</span>
+                </li>
+                <li data-value="template2">
+                     <img src="template2.jfif" alt="Template 2 Preview" onerror="this.src='https://placehold.co/100x150/e9f8f2/000000?text=Template+2+Error';">
+                     <span>Template 2</span>
+                </li>
+                <li data-value="template3">
+                     <img src="template3.jfif" alt="Template 3 Preview" onerror="this.src='https://placehold.co/100x150/e9eef8/000000?text=Template+3+Error';">
+                     <span>Template 3</span>
+                </li>
+            </ul>
+
+            <div class="button-group">
+                <button id="back-btn">Back</button>
+                <button id="download-btn">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        const video = document.getElementById("video");
+        const captureBtn = document.getElementById("capture-btn");
+        const reviewBtn = document.getElementById("review-btn");
+        const photosContainer = document.getElementById("photos");
+        const previewImagesContainer = document.getElementById("preview-images");
+        const timerInput = document.getElementById("timer");
+        const countdownOverlay = document.getElementById("countdown-overlay");
+        const templateList = document.getElementById("template-list");
+        const backBtn = document.getElementById("back-btn");
+        const downloadBtn = document.getElementById("download-btn");
+        const capturePage = document.getElementById("capture-page");
+        const previewPage = document.getElementById("preview-page");
+        const previewCount = document.querySelector(".preview-count");
+        const prevPreviewBtn = document.getElementById("prev-preview");
+        const nextPreviewBtn = document.getElementById("next-preview");
+        const circles = [
+            document.getElementById("circle-1"),
+            document.getElementById("circle-2"),
+            document.getElementById("circle-3")
+        ];
+
+        let capturedImages = [];
+        let selectedTemplateValue = "white-template";
+        let photoStripDataURL = null;
+        let captureInProgress = false;
+        let currentPreviewIndex = 0;
+
+        navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+            video.srcObject = stream;
+        }).catch(err => {
+            console.error("Error accessing camera:", err);
+            const messageBox = document.createElement('div');
+            messageBox.style.cssText = `
+                position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+                background-color: #ffcccc; color: #cc0000; padding: 15px 20px;
+                border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1000;
+                font-family: Arial, sans-serif;
+            `;
+            messageBox.textContent = "Could not access camera. Please check your permissions.";
+            document.body.appendChild(messageBox);
+            setTimeout(() => {
+                document.body.removeChild(messageBox);
+            }, 5000);
+        });
+
+        templateList.addEventListener("click", (event) => {
+            const listItem = event.target.closest("li");
+            if (listItem) {
+                selectedTemplateValue = listItem.dataset.value;
+                updateActiveTemplate(selectedTemplateValue);
+                if (previewPage.classList.contains('active')) {
+                     updateStrip();
+                }
+            }
+        });
+
+        function updateActiveTemplate(templateValue) {
+            const items = templateList.querySelectorAll("li");
+            items.forEach(item => {
+                item.classList.remove("active");
+                if (item.dataset.value === templateValue) {
+                    item.classList.add("active");
+                }
+            });
+        }
+
+        backBtn.addEventListener("click", () => {
+            switchToPage("capture-page");
+        });
+
+        reviewBtn.addEventListener("click", () => {
+            if (capturedImages.length === 3) {
+                switchToPage("preview-page");
+                updateStrip();
+            }
+        });
+
+        prevPreviewBtn.addEventListener("click", () => {
+            if (currentPreviewIndex > 0) {
+                currentPreviewIndex--;
+                updatePreviewDisplay();
+            }
+        });
+
+        nextPreviewBtn.addEventListener("click", () => {
+            if (currentPreviewIndex < capturedImages.length - 1) {
+                currentPreviewIndex++;
+                updatePreviewDisplay();
+            }
+        });
+
+        function switchToPage(pageId) {
+            document.querySelectorAll(".page").forEach(page => {
+                page.classList.remove("active");
+            });
+            document.getElementById(pageId).classList.add("active");
+        }
+
+        captureBtn.addEventListener("click", () => {
+            if (captureInProgress) return;
+
+            const interval = parseInt(timerInput.value) || 3;
+
+            if (capturedImages.length === 3) {
+                resetCaptureState();
+            }
+
+            captureInProgress = true;
+            captureBtn.disabled = true;
+            reviewBtn.disabled = true;
+            captureBtn.textContent = "Capturing...";
+
+            let count = 0;
+            const totalPhotosToCapture = 3 - capturedImages.length;
+
+            const autoCapture = setInterval(() => {
+                showCountdown(interval, () => {
+                    capturePhoto();
+                    count++;
+                    if (count === totalPhotosToCapture) {
+                        clearInterval(autoCapture);
+                        captureBtn.disabled = false;
+                        captureBtn.textContent = "Retake Photos";
+                        captureInProgress = false;
+                        if (capturedImages.length === 3) {
+                             reviewBtn.disabled = false;
+                             triggerConfetti();
+                        }
+                    }
+                });
+            }, (interval + 1) * 1000);
+        });
+
+        function showCountdown(seconds, callback) {
+            let count = seconds;
+            countdownOverlay.style.visibility = "visible";
+            countdownOverlay.textContent = count;
+
+            const countdown = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownOverlay.textContent = count;
+                } else {
+                    clearInterval(countdown);
+                    countdownOverlay.style.visibility = "hidden";
+                    callback();
+                }
+            }, 1000);
+        }
+
+        function capturePhoto() {
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            context.setTransform(1, 0, 0, 1, 0, 0);
+
+            const dataURL = canvas.toDataURL("image/png");
+            capturedImages.push(dataURL);
+
+            currentPreviewIndex = capturedImages.length - 1;
+            updatePreviewImages();
+        }
+
+        function updatePreviewImages() {
+            previewCount.textContent = `${capturedImages.length}/3 Photos`;
+
+            circles.forEach((circle, i) => {
+                if (i < capturedImages.length) {
+                    circle.classList.add("filled");
+                    if (i === currentPreviewIndex) {
+                         circle.style.backgroundColor = "#ff6b6b";
+                    } else {
+                         circle.style.backgroundColor = "";
+                    }
+                } else {
+                    circle.classList.remove("filled");
+                    circle.style.backgroundColor = "";
+                }
+            });
+
+            updatePreviewNavButtons();
+            updatePreviewDisplay();
+        }
+
+        function updatePreviewNavButtons() {
+            prevPreviewBtn.disabled = capturedImages.length <= 1 || currentPreviewIndex === 0;
+            nextPreviewBtn.disabled = capturedImages.length <= 1 || currentPreviewIndex >= capturedImages.length - 1;
+        }
+
+        function updatePreviewDisplay() {
+            previewImagesContainer.innerHTML = "";
+
+            if (capturedImages.length === 0) {
+                const placeholder = document.createElement("div");
+                placeholder.style.cssText = `
+                    width: 150px; height: 150px; background-color: #dee2e6; border-radius: 4px;
+                    display: flex; justify-content: center; align-items: center; color: #6c757d;
+                    font-size: 14px; text-align: center;
+                `;
+                placeholder.textContent = "No photos yet";
+                previewImagesContainer.appendChild(placeholder);
+            } else {
+                const img = document.createElement("img");
+                img.src = capturedImages[currentPreviewIndex];
+                img.className = "preview-image";
+                img.alt = `Photo ${currentPreviewIndex + 1}`;
+                previewImagesContainer.appendChild(img);
+
+                if (capturedImages.length > 1) {
+                    const photoNumber = document.createElement("div");
+                    photoNumber.textContent = `Photo ${currentPreviewIndex + 1}/${capturedImages.length}`;
+                    photoNumber.style.cssText = `
+                        font-size: 12px; color: #6c757d; margin-top: 5px;
+                    `;
+                    previewImagesContainer.appendChild(photoNumber);
+                }
+            }
+
+             circles.forEach((circle, i) => {
+                if (i === currentPreviewIndex && i < capturedImages.length) {
+                    circle.style.backgroundColor = "#ff6b6b";
+                } else if (i < capturedImages.length) {
+                    circle.style.backgroundColor = "#4ecdc4";
+                } else {
+                    circle.style.backgroundColor = "#dee2e6";
+                }
+             });
+
+            updatePreviewNavButtons();
+        }
+
+
+        function updateStrip() {
+            photosContainer.innerHTML = "";
+
+            if (capturedImages.length === 0) return;
+
+            const stripCanvas = document.createElement("canvas");
+            const ctx = stripCanvas.getContext("2d");
+
+            const imgWidth = 300;
+            const imgHeight = 660;
+
+            stripCanvas.width = imgWidth;
+            stripCanvas.height = imgHeight;
+
+            let backgroundSource = null;
+            let backgroundColor = null;
+
+            switch(selectedTemplateValue) {
+                case "white-template":
+                    backgroundColor = "#FFFFFF"; 
+                    break;
+                case "template1":
+                    backgroundSource = "template1.jfif"; 
+                    break;
+                case "template2":
+                    backgroundSource = "template2.jfif"; 
+                    break;
+                case "template3":
+                    backgroundSource = "template3.jfif"; 
+                    break;
+                default:
+                    backgroundColor = "#FFFFFF";
+            }
+
+            const drawStripContent = () => {
+
+                const framePositions = [
+                { x: 35, y: 100, width: 230, height: 145 }, 
+                { x: 35, y: 255, width: 230, height: 145 },
+                { x: 35, y: 410, width: 230, height: 145 },
+            ];
+            const imgHeight = 640; 
+
+                let loadedCount = 0;
+                capturedImages.forEach((imgSrc, index) => {
+                    const userImg = new Image();
+                    userImg.src = imgSrc;
+
+                    userImg.onload = () => {
+                        const frame = framePositions[index];
+                        ctx.drawImage(userImg, frame.x, frame.y, frame.width, frame.height);
+
+                        loadedCount++;
+                        if (loadedCount === capturedImages.length) {
+                            photoStripDataURL = stripCanvas.toDataURL("image/png");
+
+                            const finalStripImg = document.createElement("img");
+                            finalStripImg.src = photoStripDataURL;
+                            finalStripImg.alt = "Generated Photo Strip";
+                            finalStripImg.style.width = "100%";
+                            finalStripImg.style.maxWidth = "300px";
+                            finalStripImg.style.display = "block";
+                            finalStripImg.style.margin = "0 auto";
+                            finalStripImg.style.borderRadius = "8px";
+                            finalStripImg.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+                            photosContainer.appendChild(finalStripImg);
+                        }
+                    };
+                    userImg.onerror = () => {
+                        console.error("Error loading user image for strip:", imgSrc);
+                        loadedCount++;
+                         if (loadedCount === capturedImages.length) {
+                             console.warn("Could not load all user images for the photo strip.");
+                             photoStripDataURL = stripCanvas.toDataURL("image/png");
+                             const finalStripImg = document.createElement("img");
+                             finalStripImg.src = photoStripDataURL;
+                             finalStripImg.alt = "Generated Photo Strip (partial)";
+                             finalStripImg.style.width = "100%";
+                             finalStripImg.style.maxWidth = "300px";
+                             finalStripImg.style.display = "block";
+                             finalStripImg.style.margin = "0 auto";
+                             finalStripImg.style.borderRadius = "8px";
+                             finalStripImg.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+                             photosContainer.appendChild(finalStripImg);
+                         }
+                    };
+                });
+            };
+
+            if (backgroundSource) {
+                const backgroundImg = new Image();
+                backgroundImg.src = backgroundSource;
+                backgroundImg.onload = () => {
+                    ctx.drawImage(backgroundImg, 0, 0, imgWidth, imgHeight);
+                    drawStripContent(); 
+                };
+                 backgroundImg.onerror = () => {
+                     console.error("Error loading background image:", backgroundSource);
+                     ctx.fillStyle = "#FFFFFF";
+                     ctx.fillRect(0, 0, imgWidth, imgHeight);
+                     drawStripContent(); 
+                 };
+            } else if (backgroundColor) {
+                ctx.fillStyle = backgroundColor;
+                ctx.fillRect(0, 0, imgWidth, imgHeight);
+                drawStripContent(); 
+            } else {
+                 ctx.fillStyle = "#FFFFFF";
+                 ctx.fillRect(0, 0, imgWidth, imgHeight);
+                 drawStripContent();
+            }
+        }
+
+        downloadBtn.addEventListener("click", () => {
+            if (photoStripDataURL) {
+                const link = document.createElement("a");
+                link.download = "photo-strip.png"; 
+                link.href = photoStripDataURL;
+                link.click();
+
+                resetCaptureState();
+                switchToPage("capture-page");
+
+            } else {
+                 const stripDiv = photosContainer.querySelector(".strip");
+                 if (stripDiv) {
+                      console.error("Photo strip data URL not available for download.");
+                      const messageBox = document.createElement('div');
+                         messageBox.style.cssText = `
+                             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+                             background-color: #ffcccc; color: #cc0000; padding: 15px 20px;
+                             border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1000;
+                             font-family: Arial, sans-serif;
+                         `;
+                         messageBox.textContent = "Could not generate photo strip for download. Please try again.";
+                         document.body.appendChild(messageBox);
+                         setTimeout(() => {
+                             document.body.removeChild(messageBox);
+                         }, 5000);
+                 } else {
+                     console.error("Photo strip container not found.");
+                      const messageBox = document.createElement('div');
+                         messageBox.style.cssText = `
+                             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+                             background-color: #ffcccc; color: #cc0000; padding: 15px 20px;
+                             border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1000;
+                             font-family: Arial, sans-serif;
+                         `;
+                         messageBox.textContent = "Could not generate photo strip for download. Please try again.";
+                         document.body.appendChild(messageBox);
+                         setTimeout(() => {
+                             document.body.removeChild(messageBox);
+                         }, 5000);
+                 }
+            }
+        });
+
+        function resetCaptureState() {
+            capturedImages = [];
+            currentPreviewIndex = 0;
+            photoStripDataURL = null;
+            updatePreviewImages();
+            reviewBtn.disabled = true;
+            captureBtn.textContent = "Capture Photos";
+            photosContainer.innerHTML = "";
+        }
+
+
+        function triggerConfetti() {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+            });
+        }
+
+        updatePreviewImages();
+        updateActiveTemplate(selectedTemplateValue);
+
+    </script>
+</body>
+</html>
